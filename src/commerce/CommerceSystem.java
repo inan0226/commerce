@@ -8,7 +8,7 @@ public class CommerceSystem {
     private Cart cart = new Cart();
     private Scanner sc = new Scanner(System.in);
 
-    // 💡 [핵심] 관리자 전담 직원을 고용합니다!
+
     private AdminManager adminManager;
 
     public CommerceSystem(List<Category> categories) {
@@ -34,7 +34,7 @@ public class CommerceSystem {
                 cart.clear();
                 System.out.println("장바구니를 비웠습니다.");
             } else if (choice == 6) {
-                // 💡 [핵심] 사용자가 6번을 누르면? "어이, 관리자 직원! 네가 처리해!" 하고 넘겨버립니다.
+
                 adminManager.authenticateAndStart();
             } else {
                 System.out.println("잘못된 입력입니다.");
@@ -53,7 +53,7 @@ public class CommerceSystem {
         System.out.print("입력: ");
     }
 
-    // 아래는 오직 '일반 손님'을 위한 로직만 남았습니다.
+
     private void handleCategory(Category category) {
         while (true) {
             System.out.println("\n[ " + category.getName() + " ]");
