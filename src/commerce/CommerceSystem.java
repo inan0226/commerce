@@ -3,84 +3,90 @@ package commerce;
 import java.util.List;
 import java.util.Scanner;
 
-
-// CommerceSystem 클래스: 카테고리들을 관리하고 메뉴 출력 및 입력 로직을 담당합니다.
-
 public class CommerceSystem {
-
-    // 시스템이 관리할 카테고리 목록입니다.
     private List<Category> categories;
+    private Cart cart = new Cart();
+    private Scanner sc = new Scanner(System.in);
 
-    // 생성자: Main에서 만든 카테고리 리스트를 전달받아 시스템을 준비시킵니다.
+    // 💡 [핵심] 관리자 전담 직원을 고용합니다!
+    private AdminManager adminManager;
+
     public CommerceSystem(List<Category> categories) {
         this.categories = categories;
+        // 시스템 시작 시, 전담 직원에게 진열대와 장바구니 정보를 줘서 출근시킵니다.
+        this.adminManager = new AdminManager(categories, cart, sc);
     }
-        Scanner sc = new Scanner(System.in);
-    // 시스템의 핵심 로직(반복문, 조건문)이 시작되는 메서드입니다.
+
     public void start() {
-
-
-        // [바깥쪽 무한루프]: 메인 카테고리 선택 화면
         while (true) {
-            System.out.println("\n[ 실시간 커머스 플랫폼 메인 ]");
-
-            // 리스트의 size만큼 반복하며 카테고리 이름을 출력합니다.
-            for (int i = 0; i < categories.size(); i++) {
-                Category c = categories.get(i);
-                System.out.println((i + 1) + ". " + c.getName());
-            }
-
-            System.out.println("0. 종료         | 프로그램 종료");
-            System.out.print("입력: ");
-
-            int choice = sc.nextInt(); // 사용자의 메뉴 선택 입력
+            showMainMenu();
+            int choice = sc.nextInt();
+            sc.nextLine();
 
             if (choice == 0) {
-                System.out.println("커머스 플랫폼을 종료합니다.");
-                break; // 0 입력 시 바깥쪽 루프를 탈출하여 프로그램 종료
-            }
-            // 선택한 번호가 카테고리 범위 내에 있는지 확인
-            else if (choice > 0 && choice <= categories.size()) {
-                // 선택한 번호에서 1을 빼서 리스트의 인덱스(0부터 시작)로 접근합니다.
-                Category selectedCategory = categories.get(choice - 1);
-
-                // [안쪽 무한루프]: 선택된 카테고리의 상품 목록 화면
-                while (true) {
-                    System.out.println("\n[ " + selectedCategory.getName() + " 카테고리 ]");
-
-                    // 해당 카테고리가 가진 상품 리스트를 가져옵니다.
-                    List<Product> categoryProducts = selectedCategory.getProducts();
-
-                    // 상품 리스트를 반복하며 상세 정보를 출력합니다.
-                    for (int i = 0; i < categoryProducts.size(); i++) {
-                        Product p = categoryProducts.get(i);
-                        System.out.println((i + 1) + ". " + p.getName() + " | " + p.getPrice() + "원 | " + p.getStock());
-                    }
-                    System.out.println("0. 뒤로가기");
-                    System.out.print("입력: ");
-
-                    int prodChoice = sc.nextInt();
-
-                    if (prodChoice == 0) {
-                        break; // 안쪽 루프만 탈출하여 다시 메인 카테고리 화면으로 이동
-                    }
-                    // 선택한 상품 번호가 유효한지 확인
-                    else if (prodChoice > 0 && prodChoice <= categoryProducts.size()) {
-                        // 실제 선택된 상품 객체를 꺼내옵니다.
-                        Product selectedProduct = categoryProducts.get(prodChoice - 1);
-
-                        // 객체의 필드값들을 조합하여 최종 정보 출력
-                        System.out.println("선택한 상품: " + selectedProduct.getName() +
-                                " | " + selectedProduct.getPrice() + "원" +
-                                " | " + selectedProduct.getDesc() +
-                                " | 재고: " + selectedProduct.getStock() + "개");
-                    } else {
-                        System.out.println("잘못된 입력입니다.");
-                    }
-                }
+                System.out.println("종료합니다.");
+                break;
+            } else if (choice > 0 && choice <= categories.size()) {
+                handleCategory(categories.get(choice - 1));
+            } else if (choice == 4 && !cart.isEmpty()) {
+                handleOrder();
+            } else if (choice == 5 && !cart.isEmpty()) {
+                cart.clear();
+                System.out.println("장바구니를 비웠습니다.");
+            } else if (choice == 6) {
+                // 💡 [핵심] 사용자가 6번을 누르면? "어이, 관리자 직원! 네가 처리해!" 하고 넘겨버립니다.
+                adminManager.authenticateAndStart();
             } else {
-                System.out.println("잘못된 입력입니다. 다시 선택해주세요.");
+                System.out.println("잘못된 입력입니다.");
             }
         }
+    }
+
+    private void showMainMenu() {
+        System.out.println("\n[ 메인 메뉴 ]");
+        for (int i = 0; i < categories.size(); i++) {
+            System.out.println((i + 1) + ". " + categories.get(i).getName());
+        }
+        System.out.println("0. 종료");
+        if (!cart.isEmpty()) System.out.println("4. 장바구니 확인 | 5. 주문 취소");
+        System.out.println("6. 관리자 모드");
+        System.out.print("입력: ");
+    }
+
+    // 아래는 오직 '일반 손님'을 위한 로직만 남았습니다.
+    private void handleCategory(Category category) {
+        while (true) {
+            System.out.println("\n[ " + category.getName() + " ]");
+            category.printProducts();
+            System.out.print("0. 뒤로가기 / 상품번호 입력: ");
+
+            int choice = sc.nextInt();
+            sc.nextLine();
+            if (choice == 0) return;
+
+            if (choice > 0 && choice <= category.getProducts().size()) {
+                Product selected = category.getProducts().get(choice - 1);
+                System.out.print(selected.getName() + "를 담으시겠습니까? (1.확인 2.취소): ");
+                if (sc.nextInt() == 1) {
+                    sc.nextLine();
+                    if (selected.getStock() > 0) {
+                        cart.addProduct(selected, 1);
+                        System.out.println("장바구니 추가 완료!");
+                    } else System.out.println("재고가 부족합니다!");
+                } else sc.nextLine();
+            }
+        }
+    }
+
+    private void handleOrder() {
+        System.out.println("\n[ 장바구니 확인 ]");
+        cart.printReceipt();
+        System.out.println("총 금액: " + cart.calculateTotal() + "원");
+        System.out.print("1. 주문 확정 2. 돌아가기: ");
+        if (sc.nextInt() == 1) {
+            sc.nextLine();
+            cart.processPayment();
+            System.out.println("주문 완료!");
+        } else sc.nextLine();
     }
 }
